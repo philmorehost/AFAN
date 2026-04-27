@@ -30,6 +30,7 @@ if (file_exists(__DIR__ . '/config.php')) {
 
 // Load Helper Functions
 require_once __DIR__ . '/functions.php';
+require_once __DIR__ . '/email_templates.php';
 
 // Load Database Connection
 require_once __DIR__ . '/db.php';

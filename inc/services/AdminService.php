@@ -25,9 +25,21 @@ class AdminService {
             // Automated Trigger: Admin/Agent Login Alert (SMTP)
             $comm = new CommService($this->db);
             $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
-            $timestamp = date('Y-m-d H:i:s');
-            $comm->sendEmail($user['email'], "Security Alert: Admin Login Detected",
-                "A login to your AFAN account ({$user['username']}) was detected at {$timestamp}.\nIP Address: {$ip}\n\nIf this was not you, please contact the system administrator.");
+            $timestamp = date('F j, Y, g:i a');
+
+            $emailContent = "
+                <p>A new login to your AFAN administrative account was detected.</p>
+                <div class='alert-box'>
+                    <strong>Login Details:</strong><br>
+                    User: {$user['username']}<br>
+                    Time: {$timestamp}<br>
+                    IP Address: {$ip}
+                </div>
+                <p>If this was not you, please secure your account immediately or contact the system administrator.</p>
+            ";
+
+            $htmlBody = get_email_template("Security Alert: Login Detected", $emailContent);
+            $comm->sendEmail($user['email'], "Security Alert: Admin Login Detected", $htmlBody);
 
             return $user;
         }

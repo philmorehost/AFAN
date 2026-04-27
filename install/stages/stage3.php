@@ -9,6 +9,7 @@ if (file_exists(dirname(__DIR__, 2) . '/vendor/autoload.php')) {
 }
 
 require_once '../inc/services/CommService.php';
+require_once '../inc/email_templates.php';
 
 $msg = '';
 $msg_type = 'error';
@@ -42,7 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!defined('APP_NAME')) define('APP_NAME', 'AFAN Installation Test');
 
         $comm = new CommService();
-        if ($comm->sendEmail($smtp_from, "AFAN Installation Test", "Your SMTP settings are working correctly!")) {
+        $htmlBody = get_email_template("Installation Test", "<p>Your AFAN Food Security Platform SMTP settings are working correctly!</p><p>This is a test email sent during the system installation process.</p>");
+        if ($comm->sendEmail($smtp_from, "AFAN Installation Test", $htmlBody)) {
             $msg = "Test email sent successfully to $smtp_from!";
             $msg_type = 'success';
         } else {
