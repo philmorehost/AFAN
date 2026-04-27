@@ -6,13 +6,22 @@ require_once 'inc/init.php';
 
 $adminService = new AdminService($db);
 
-// Basic Auth & Permission Check (Mocked for now)
+// Basic Auth & Permission Check
 // if (!$adminService->hasPermission($_SESSION['user_id'], 'manage_admins')) {
 //     die("Unauthorized access.");
 // }
 
-$roles = $adminService->getRoles();
-$admins = $adminService->getAdmins();
+try {
+    $roles = $adminService->getRoles();
+    $admins = $adminService->getAdmins();
+} catch (PDOException $e) {
+    // If tables don't exist, we might need to redirect to installer
+    if (strpos($e->getMessage(), "doesn't exist") !== false) {
+        header("Location: install/index.php");
+        exit;
+    }
+    die("System Error: " . $e->getMessage());
+}
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
@@ -150,17 +159,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($admins as $admin): ?>
-                            <tr>
-                                <td><?php echo $admin['username']; ?></td>
-                                <td><?php echo $admin['email']; ?></td>
-                                <td><span class="badge"><?php echo $admin['role_name'] ?? 'No Role'; ?></span></td>
-                                <td><?php echo date('M j, Y', strtotime($admin['created_at'])); ?></td>
-                                <td>
-                                    <button style="background: none; border: none; color: #3b82f6; cursor: pointer;">Edit</button>
-                                </td>
-                            </tr>
-                        <?php endforeach; ?>
+                        <?php if (empty($admins)): ?>
+                            <tr><td colspan="5" style="text-align: center;">No administrators found.</td></tr>
+                        <?php else: ?>
+                            <?php foreach ($admins as $admin): ?>
+                                <tr>
+                                    <td><?php echo $admin['username']; ?></td>
+                                    <td><?php echo $admin['email']; ?></td>
+                                    <td><span class="badge"><?php echo $admin['role_name'] ?? 'No Role'; ?></span></td>
+                                    <td><?php echo date('M j, Y', strtotime($admin['created_at'])); ?></td>
+                                    <td>
+                                        <button style="background: none; border: none; color: #3b82f6; cursor: pointer;">Edit</button>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>

@@ -12,8 +12,15 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+// Load Composer Autoloader
+if (file_exists(dirname(__DIR__) . '/vendor/autoload.php')) {
+    require_once dirname(__DIR__) . '/vendor/autoload.php';
+}
+
 // Load Configuration
-require_once __DIR__ . '/config.php';
+if (file_exists(__DIR__ . '/config.php')) {
+    require_once __DIR__ . '/config.php';
+}
 
 // Load Helper Functions
 require_once __DIR__ . '/functions.php';

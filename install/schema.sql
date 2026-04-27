@@ -56,6 +56,3 @@ CREATE TABLE IF NOT EXISTS tokens (
     FOREIGN KEY (beneficiary_id) REFERENCES beneficiaries(id),
     FOREIGN KEY (redeemed_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Audit Trail (Partitioned logic handled in PHP, but here is the base structure)
--- audit_trail_YYYY_MM

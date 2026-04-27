@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $db_name = $_POST['db_name'] ?? '';
     $db_user = $_POST['db_user'] ?? '';
     $db_pass = $_POST['db_pass'] ?? '';
-    $sms_token = $_POST['sms_token'] ?? '';
+    $sms_api_key = $_POST['sms_api_key'] ?? '';
     $sms_sender = $_POST['sms_sender'] ?? 'AFAN-FISP';
 
     // Test DB Connection
@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'pass' => $db_pass
         ];
         $_SESSION['install_data']['sms'] = [
-            'token' => $sms_token,
+            'api_key' => $sms_api_key,
             'sender' => $sms_sender
         ];
 
@@ -62,10 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e5e7eb;">
     
-    <h3>PhilmoreSMS Configuration</h3>
+    <h3>PhilmoreSMS Configuration (v2)</h3>
     <div class="form-group">
-        <label>API Token</label>
-        <input type="text" name="sms_token" placeholder="Enter PhilmoreSMS Token" required>
+        <label>API Key</label>
+        <input type="text" name="sms_api_key" placeholder="Enter PhilmoreSMS API Key" required>
     </div>
     <div class="form-group">
         <label>Sender ID</label>
