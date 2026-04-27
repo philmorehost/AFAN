@@ -19,16 +19,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($user) {
             session_regenerate_id(true);
             $_SESSION['user_id'] = $user['id'];
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['role_id'] = $user['role_id'];
+            $_SESSION['username'] = $user['username'];
+            $_SESSION['role_id'] = $user['role_id'];
 
-        // Log activity
-        log_audit($user['id'], 'login', 'User logged in successfully');
+            // Log activity
+            log_audit($user['id'], 'login', 'User logged in successfully');
 
-        header("Location: dashboard.php");
-        exit;
-    } else {
-        $error = "Invalid username or password.";
+            header("Location: dashboard.php");
+            exit;
+        } else {
+            $error = "Invalid username or password.";
+        }
     }
 }
 ?>
