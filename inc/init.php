@@ -17,6 +17,12 @@ if (file_exists(dirname(__DIR__) . '/vendor/autoload.php')) {
     require_once dirname(__DIR__) . '/vendor/autoload.php';
 }
 
+// Check for installation
+if (!file_exists(__DIR__ . '/config.php') && !defined('INSTALLING')) {
+    header("Location: install/index.php");
+    exit;
+}
+
 // Load Configuration
 if (file_exists(__DIR__ . '/config.php')) {
     require_once __DIR__ . '/config.php';

@@ -4,6 +4,12 @@
  */
 require_once 'inc/init.php';
 
+// Check if DB is initialized
+if (!isset($db)) {
+    header("Location: install/index.php");
+    exit;
+}
+
 $adminService = new AdminService($db);
 
 // Basic Auth & Permission Check

@@ -3,6 +3,11 @@
  * Stage 3: SMTP Configuration
  */
 
+// Load Composer Autoloader for PHPMailer
+if (file_exists(dirname(__DIR__, 2) . '/vendor/autoload.php')) {
+    require_once dirname(__DIR__, 2) . '/vendor/autoload.php';
+}
+
 require_once '../inc/services/CommService.php';
 
 $msg = '';

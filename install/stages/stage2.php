@@ -4,8 +4,9 @@
  */
 
 $error = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $db_host = $_POST['db_host'] ?? '';
+// Only attempt connection if POST is made and we have at least host, name, and user
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['db_name']) && !empty($_POST['db_user'])) {
+    $db_host = $_POST['db_host'] ?? 'localhost';
     $db_name = $_POST['db_name'] ?? '';
     $db_user = $_POST['db_user'] ?? '';
     $db_pass = $_POST['db_pass'] ?? '';
@@ -45,19 +46,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <form method="POST">
     <div class="form-group">
         <label>MySQL Host</label>
-        <input type="text" name="db_host" value="localhost" required>
+        <input type="text" name="db_host" value="<?php echo $_POST['db_host'] ?? 'localhost'; ?>" required>
     </div>
     <div class="form-group">
         <label>Database Name</label>
-        <input type="text" name="db_name" required>
+        <input type="text" name="db_name" value="<?php echo $_POST['db_name'] ?? ''; ?>" required>
     </div>
     <div class="form-group">
         <label>MySQL User</label>
-        <input type="text" name="db_user" required>
+        <input type="text" name="db_user" value="<?php echo $_POST['db_user'] ?? ''; ?>" required>
     </div>
     <div class="form-group">
         <label>MySQL Password</label>
-        <input type="password" name="db_pass">
+        <input type="password" name="db_pass" value="<?php echo $_POST['db_pass'] ?? ''; ?>">
     </div>
     
     <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e5e7eb;">
@@ -65,11 +66,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <h3>PhilmoreSMS Configuration (v2)</h3>
     <div class="form-group">
         <label>API Key</label>
-        <input type="text" name="sms_api_key" placeholder="Enter PhilmoreSMS API Key" required>
+        <input type="text" name="sms_api_key" placeholder="Enter PhilmoreSMS API Key" value="<?php echo $_POST['sms_api_key'] ?? ''; ?>" required>
     </div>
     <div class="form-group">
         <label>Sender ID</label>
-        <input type="text" name="sms_sender" value="AFAN-FISP" maxlength="11" required>
+        <input type="text" name="sms_sender" value="<?php echo $_POST['sms_sender'] ?? 'AFAN-FISP'; ?>" maxlength="11" required>
     </div>
 
     <button type="submit" class="btn">Test & Continue</button>

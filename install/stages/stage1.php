@@ -47,9 +47,7 @@ $can_proceed = (version_compare($php_version, '7.4.0', '>=') && $openssl_ok && $
 
 <div style="margin-top: 2rem;">
     <?php if ($can_proceed): ?>
-        <form action="index.php?stage=2" method="POST">
-            <button type="submit" class="btn">Proceed to Database Setup</button>
-        </form>
+        <a href="index.php?stage=2" class="btn" style="display: block; text-align: center; text-decoration: none;">Proceed to Database Setup</a>
     <?php else: ?>
         <div class="alert alert-error">
             Please resolve the issues above to continue.
