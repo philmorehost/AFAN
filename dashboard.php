@@ -13,7 +13,7 @@ if (!isset($_SESSION['user_id'])) {
 $adminService = new AdminService($db);
 // Any authenticated admin can view the dashboard
 
-$comm = new CommService();
+$comm = new CommService($db);
 $beneficiaryService = new BeneficiaryService($db);
 $tokenService = new TokenService($db, $comm);
 

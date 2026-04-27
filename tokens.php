@@ -15,7 +15,7 @@ if (!$adminService->hasPermission($_SESSION['user_id'], 'manage_tokens')) {
     die("Unauthorized access: You do not have permission to manage tokens.");
 }
 
-$comm = new CommService();
+$comm = new CommService($db);
 $tokenService = new TokenService($db, $comm);
 $programService = new ProgramService($db);
 $beneficiaryService = new BeneficiaryService($db);

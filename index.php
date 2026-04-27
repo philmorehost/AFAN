@@ -267,14 +267,12 @@ $cta = $sections['cta'] ?? ['title' => 'Ready to manage distribution?', 'content
                 <h1><?php echo htmlspecialchars($hero['title']); ?></h1>
                 <p><?php echo nl2br(htmlspecialchars($hero['content'])); ?></p>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
-                    <a href="dashboard.php" class="btn btn-primary">Access Dashboard</a>
-                    <a href="#features" class="btn btn-outline">Learn More</a>
+                    <a href="#features" class="btn btn-primary">Learn More</a>
+                    <a href="dashboard.php" class="btn btn-outline">Admin Portal</a>
                 </div>
             </div>
             <div class="hero-image-container">
-                <div style="background: var(--secondary); width: 100%; aspect-ratio: 4/3; border-radius: 2rem; display: flex; align-items: center; justify-content: center; color: white; font-size: 4rem;">
-                    🌾
-                </div>
+                <img src="assets/img/logo.png" alt="AFAN Logo" class="hero-image" style="background: white; padding: 2rem; object-fit: contain;">
             </div>
         </section>
 

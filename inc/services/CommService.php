@@ -117,6 +117,7 @@ class CommService {
 
         $response = curl_exec($ch);
         $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($error) {
@@ -124,6 +125,11 @@ class CommService {
             return ['status' => 'error', 'message' => $error];
         }
 
-        return json_decode($response, true);
+        $result = json_decode($response, true);
+        if ($httpCode >= 400 || (isset($result['status']) && ($result['status'] === 'error' || $result['status'] === false))) {
+            return ['status' => 'error', 'message' => $result['message'] ?? 'API error'];
+        }
+
+        return ['status' => 'success', 'data' => $result];
     }
 }

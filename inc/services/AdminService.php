@@ -21,6 +21,14 @@ class AdminService {
         if ($user && password_verify($password, $user['password'])) {
             // Log Login Attempt
             log_audit($user['id'], 'login', "Admin logged in from IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
+
+            // Automated Trigger: Admin/Agent Login Alert (SMTP)
+            $comm = new CommService($this->db);
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+            $timestamp = date('Y-m-d H:i:s');
+            $comm->sendEmail($user['email'], "Security Alert: Admin Login Detected",
+                "A login to your AFAN account ({$user['username']}) was detected at {$timestamp}.\nIP Address: {$ip}\n\nIf this was not you, please contact the system administrator.");
+
             return $user;
         }
 
