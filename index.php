@@ -22,7 +22,7 @@ if (isset($db) && $db) {
 
 // Default content if not in DB
 $hero = $sections['hero'] ?? ['title' => 'Securing the Future of Agriculture', 'content' => 'The AFAN Food Security Platform streamlines beneficiary management and resource distribution for Nigerian farmers.'];
-$featHeader = $sections['features_header'] ?? ['title' => 'Advanced Distribution Management', 'content' => 'Built with modern technology to ensure transparency and efficiency in every transaction.'];
+$featHeader = $sections['features_header'] ?? ['title' => 'Strategic Impact & Key Initiatives', 'content' => 'Driving food security through technology, partnerships, and direct farmer support.'];
 $cta = $sections['cta'] ?? ['title' => 'Ready to manage distribution?', 'content' => 'Sign in to the administrative portal to get started.'];
 
 ?>
@@ -268,7 +268,6 @@ $cta = $sections['cta'] ?? ['title' => 'Ready to manage distribution?', 'content
                 <p><?php echo nl2br(htmlspecialchars($hero['content'])); ?></p>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                     <a href="#features" class="btn btn-primary">Learn More</a>
-                    <a href="dashboard.php" class="btn btn-outline">Admin Portal</a>
                 </div>
             </div>
             <div class="hero-image-container">
@@ -285,19 +284,29 @@ $cta = $sections['cta'] ?? ['title' => 'Ready to manage distribution?', 'content
 
                 <div class="feature-grid">
                     <div class="feature-card">
-                        <div class="feature-icon">📱</div>
-                        <h3>SMS Notifications</h3>
-                        <p>Real-time alerts via PhilmoreSMS API keep farmers informed about their support status.</p>
+                        <div class="feature-icon">📋</div>
+                        <h3>Digital Farmer Registry</h3>
+                        <p>Reduces fraud by ensuring genuine farmers receive support, addressing issues with "briefcase farmers".</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">🛡️</div>
-                        <h3>Secure Redemption</h3>
-                        <p>Cryptographically secure tokens ensure that resources reach the intended beneficiaries.</p>
+                        <div class="feature-icon">🚜</div>
+                        <h3>Targeted Distribution</h3>
+                        <p>Efficiently delivers farm inputs and equipment, such as fertilizers, seeds, and irrigation pumps, particularly for the National Agricultural Growth Scheme (NAGS).</p>
                     </div>
                     <div class="feature-card">
-                        <div class="feature-icon">📊</div>
-                        <h3>Real-time Audit</h3>
-                        <p>Comprehensive logging and reporting tools for transparent resource tracking.</p>
+                        <div class="feature-icon">🏛️</div>
+                        <h3>Improved Access</h3>
+                        <p>Connects farmers with government programs, financial services, and agricultural insurance.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎓</div>
+                        <h3>Capacity Building</h3>
+                        <p>Offers training and services to improve crop yields and promote modern farming techniques.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🤝</div>
+                        <h3>Strategic Partnerships</h3>
+                        <p>Collaborates with the government, the African Development Bank (AfDB), and private lenders to provide over 90% subsidies on inputs and tools, boosting food security across all 36 states and the FCT.</p>
                     </div>
                 </div>
             </div>

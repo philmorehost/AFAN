@@ -92,5 +92,5 @@ CREATE TABLE IF NOT EXISTS pages (
 -- Seed default landing sections
 INSERT INTO landing_sections (section_key, title, content, sort_order) VALUES
 ('hero', 'Securing the Future of Agriculture', 'The AFAN Food Security Platform streamlines beneficiary management and resource distribution for Nigerian farmers.', 1),
-('features_header', 'Advanced Distribution Management', 'Built with modern technology to ensure transparency and efficiency in every transaction.', 2),
+('features_header', 'Strategic Impact & Key Initiatives', 'Driving food security through technology, partnerships, and direct farmer support.', 2),
 ('cta', 'Ready to manage distribution?', 'Sign in to the administrative portal to get started.', 3);
