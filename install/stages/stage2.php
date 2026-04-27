@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['db_name']) && !empty
     $db_pass = $_POST['db_pass'] ?? '';
     $sms_api_key = $_POST['sms_api_key'] ?? '';
     $sms_sender = $_POST['sms_sender'] ?? 'AFAN-FISP';
+    $nin_api_key = $_POST['nin_api_key'] ?? '';
 
     // Test DB Connection
     try {
@@ -27,6 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['db_name']) && !empty
         $_SESSION['install_data']['sms'] = [
             'api_key' => $sms_api_key,
             'sender' => $sms_sender
+        ];
+        $_SESSION['install_data']['nin'] = [
+            'api_key' => $nin_api_key
         ];
 
         header("Location: index.php?stage=3");
@@ -63,14 +67,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !empty($_POST['db_name']) && !empty
     
     <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #e5e7eb;">
     
-    <h3>PhilmoreSMS Configuration (v2)</h3>
+    <h3>API Configuration</h3>
     <div class="form-group">
-        <label>API Key</label>
+        <label>PhilmoreSMS API Key (SMS)</label>
         <input type="text" name="sms_api_key" placeholder="Enter PhilmoreSMS API Key" value="<?php echo $_POST['sms_api_key'] ?? ''; ?>" required>
     </div>
     <div class="form-group">
-        <label>Sender ID</label>
+        <label>PhilmoreSMS Sender ID</label>
         <input type="text" name="sms_sender" value="<?php echo $_POST['sms_sender'] ?? 'AFAN-FISP'; ?>" maxlength="11" required>
+    </div>
+    <div class="form-group">
+        <label>Datagifting API Key (NIN Verification)</label>
+        <input type="text" name="nin_api_key" placeholder="Enter Datagifting API Key" value="<?php echo $_POST['nin_api_key'] ?? ''; ?>" required>
     </div>
 
     <button type="submit" class="btn">Test & Continue</button>

@@ -26,19 +26,22 @@ CREATE TABLE IF NOT EXISTS beneficiaries (
     phone VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(100),
     location VARCHAR(255),
-    nin_number VARCHAR(20) UNIQUE,
-    farm_size DECIMAL(10,2),
+    nin VARCHAR(20) UNIQUE,
+    gender VARCHAR(10),
+    state_of_origin VARCHAR(50),
+    photo LONGTEXT, -- Base64 encoded photo from NIN API
+    farm_size DECIMAL(10,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Programs Table (e.g., Fertilizer Support 2024)
+-- Programs Table
 CREATE TABLE IF NOT EXISTS programs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     start_date DATE,
     end_date DATE,
-    status ENUM('active', 'closed') DEFAULT 'active',
+    status ENUM('active', 'inactive', 'closed') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 

@@ -10,6 +10,23 @@ class AdminService {
         $this->db = $db;
     }
 
+    /**
+     * Authenticate Administrator
+     */
+    public function authenticate($username, $password) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
+        $stmt->execute([$username, $username]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user['password'])) {
+            // Log Login Attempt
+            log_audit($user['id'], 'login', "Admin logged in from IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
+            return $user;
+        }
+
+        return false;
+    }
+
     // --- Role Management ---
 
     public function createRole($name, $permissions) {
@@ -55,8 +72,8 @@ class AdminService {
         $permissions = json_decode($role['permissions'], true);
         
         // Super Admin check (if 'all' is in permissions)
-        if (in_array('all', $permissions)) return true;
+        if (is_array($permissions) && in_array('all', $permissions)) return true;
 
-        return in_array($permission_key, $permissions);
+        return is_array($permissions) && in_array($permission_key, $permissions);
     }
 }

@@ -80,6 +80,32 @@ class TokenService {
         return ['success' => false, 'message' => 'System error during redemption.'];
     }
 
+    /**
+     * Count tokens
+     */
+    public function countIssued() {
+        return $this->db->query("SELECT COUNT(*) FROM tokens")->fetchColumn();
+    }
+
+    public function countRedeemed() {
+        return $this->db->query("SELECT COUNT(*) FROM tokens WHERE status = 'redeemed'")->fetchColumn();
+    }
+
+    /**
+     * Get recent redemptions
+     */
+    public function getRecentRedemptions($limit = 10) {
+        $stmt = $this->db->prepare("SELECT t.*, b.name as beneficiary_name, p.name as program_name
+                                   FROM tokens t
+                                   JOIN beneficiaries b ON t.beneficiary_id = b.id
+                                   JOIN programs p ON t.program_id = p.id
+                                   WHERE t.status = 'redeemed'
+                                   ORDER BY t.redeemed_at DESC LIMIT ?");
+        $stmt->bindValue(1, (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
+    }
+
     private function getBeneficiary($id) {
         $stmt = $this->db->prepare("SELECT * FROM beneficiaries WHERE id = ?");
         $stmt->execute([$id]);

@@ -20,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     $config_content .= "define('SMS_API_KEY', '" . addslashes($data['sms']['api_key']) . "');\n";
     $config_content .= "define('SMS_SENDER_ID', '" . addslashes($data['sms']['sender']) . "');\n\n";
+
+    $config_content .= "define('NIN_API_KEY', '" . addslashes($data['nin']['api_key']) . "');\n\n";
     
     $config_content .= "define('SMTP_HOST', '" . addslashes($data['smtp']['host']) . "');\n";
     $config_content .= "define('SMTP_PORT', " . (int)$data['smtp']['port'] . ");\n";

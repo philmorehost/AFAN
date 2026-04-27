@@ -1,0 +1,5 @@
+vendor/
+*.log
+check.log
+ver_out.log
+/home/jules/verification/
