@@ -7,6 +7,13 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
+// Fallback for non-composer environments
+if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+    require_once __DIR__ . '/../libs/PHPMailer/Exception.php';
+    require_once __DIR__ . '/../libs/PHPMailer/PHPMailer.php';
+    require_once __DIR__ . '/../libs/PHPMailer/SMTP.php';
+}
+
 class CommService {
     private $emailConfig;
     private $smsConfig;
