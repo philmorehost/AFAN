@@ -11,6 +11,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $adminService = new AdminService($db);
+if (!$adminService->hasPermission($_SESSION['user_id'], 'manage_admins')) {
+    die("Unauthorized access: You do not have permission to manage administrators.");
+}
 
 $roles = $adminService->getRoles();
 $admins = $adminService->getAdmins();
@@ -19,6 +22,9 @@ $message = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF token validation failed.");
+    }
     $username = sanitize($_POST['username']);
     $email = sanitize($_POST['email'], 'email');
     $password = $_POST['password'];
@@ -104,6 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
             <a href="tokens.php" class="nav-link">Token Redemption</a>
             <a href="admins.php" class="nav-link active">Administrators</a>
             <a href="roles.php" class="nav-link">Roles & Permissions</a>
+            <a href="settings.php" class="nav-link">System Settings</a>
+            <a href="cms_landing.php" class="nav-link">Landing Page CMS</a>
+            <a href="pages.php" class="nav-link">Custom Pages</a>
             <a href="audit.php" class="nav-link">Audit Trail</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </nav>
@@ -124,6 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
         <div class="card">
             <h4 style="margin-top: 0;">Add New Administrator</h4>
             <form method="POST">
+                <?php csrf_field(); ?>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div class="form-group">
                         <label>Username</label>

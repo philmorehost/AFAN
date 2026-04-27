@@ -10,6 +10,9 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$adminService = new AdminService($db);
+// Any authenticated admin can view the dashboard
+
 $comm = new CommService();
 $beneficiaryService = new BeneficiaryService($db);
 $tokenService = new TokenService($db, $comm);
@@ -138,6 +141,9 @@ $recentRedemptions = $tokenService->getRecentRedemptions(5);
             <a href="tokens.php" class="nav-link">Token Redemption</a>
             <a href="admins.php" class="nav-link">Administrators</a>
             <a href="roles.php" class="nav-link">Roles & Permissions</a>
+            <a href="settings.php" class="nav-link">System Settings</a>
+            <a href="cms_landing.php" class="nav-link">Landing Page CMS</a>
+            <a href="pages.php" class="nav-link">Custom Pages</a>
             <a href="audit.php" class="nav-link">Audit Trail</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </nav>

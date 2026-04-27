@@ -10,12 +10,20 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$adminService = new AdminService($db);
+if (!$adminService->hasPermission($_SESSION['user_id'], 'manage_tokens')) { // Use manage_tokens for programs too
+    die("Unauthorized access: You do not have permission to manage programs.");
+}
+
 $programService = new ProgramService($db);
 $message = '';
 $error = '';
 
 // Handle Program Creation
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_program'])) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF token validation failed.");
+    }
     $name = $_POST['name'] ?? '';
     $description = $_POST['description'] ?? '';
     $start_date = $_POST['start_date'] ?? '';
@@ -190,6 +198,9 @@ $programs = $programService->getAll();
             <a href="tokens.php" class="nav-link">Token Redemption</a>
             <a href="admins.php" class="nav-link">Administrators</a>
             <a href="roles.php" class="nav-link">Roles & Permissions</a>
+            <a href="settings.php" class="nav-link">System Settings</a>
+            <a href="cms_landing.php" class="nav-link">Landing Page CMS</a>
+            <a href="pages.php" class="nav-link">Custom Pages</a>
             <a href="audit.php" class="nav-link">Audit Trail</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </nav>
@@ -258,6 +269,7 @@ $programs = $programService->getAll();
         <div class="modal-content">
             <h4 style="margin-top: 0;">Create New Support Program</h4>
             <form method="POST">
+                <?php csrf_field(); ?>
                 <div class="form-group">
                     <label>Program Name</label>
                     <input type="text" name="name" required placeholder="e.g. Wet Season Fertilizer Subsidy">

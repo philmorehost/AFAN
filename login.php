@@ -10,11 +10,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    $adminService = new AdminService($db);
-    $user = $adminService->authenticate($username, $password);
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        $error = "CSRF verification failed.";
+    } else {
+        $adminService = new AdminService($db);
+        $user = $adminService->authenticate($username, $password);
 
-    if ($user) {
-        $_SESSION['user_id'] = $user['id'];
+        if ($user) {
+            session_regenerate_id(true);
+            $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
         $_SESSION['role_id'] = $user['role_id'];
 
@@ -120,6 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST">
+            <?php csrf_field(); ?>
             <div class="form-group">
                 <label>Username</label>
                 <input type="text" name="username" required autofocus>

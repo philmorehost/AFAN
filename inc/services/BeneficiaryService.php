@@ -9,7 +9,11 @@ class BeneficiaryService {
 
     public function __construct($db) {
         $this->db = $db;
-        $this->ninApiKey = defined('NIN_API_KEY') ? NIN_API_KEY : '';
+
+        $settingsService = new SettingsService($db);
+        $db_nin_key = $settingsService->get('nin_api_key');
+
+        $this->ninApiKey = $db_nin_key ?: (defined('NIN_API_KEY') ? NIN_API_KEY : '');
     }
 
     /**
@@ -51,7 +55,7 @@ class BeneficiaryService {
     public function register($data) {
         // Check if exists
         $check = $this->db->prepare("SELECT id FROM beneficiaries WHERE nin = ? OR phone = ?");
-        $check->execute([$data['nin'], $data['phone']]);
+        $check->execute([$data['nin'] ?? '', $data['phone'] ?? '']);
         if ($check->fetch()) return false;
 
         $stmt = $this->db->prepare("INSERT INTO beneficiaries (name, phone, email, nin, gender, state_of_origin, photo) VALUES (?, ?, ?, ?, ?, ?, ?)");

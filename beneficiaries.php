@@ -10,12 +10,20 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$adminService = new AdminService($db);
+if (!$adminService->hasPermission($_SESSION['user_id'], 'manage_beneficiaries')) {
+    die("Unauthorized access: You do not have permission to manage beneficiaries.");
+}
+
 $beneficiaryService = new BeneficiaryService($db);
 $message = '';
 $error = '';
 
 // Handle NIN Verification & Registration
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_nin'])) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF token validation failed.");
+    }
     $nin = $_POST['nin'] ?? '';
     $phone = $_POST['phone'] ?? '';
     $email = $_POST['email'] ?? '';
@@ -195,6 +203,9 @@ $beneficiaries = $beneficiaryService->getAll();
             <a href="tokens.php" class="nav-link">Token Redemption</a>
             <a href="admins.php" class="nav-link">Administrators</a>
             <a href="roles.php" class="nav-link">Roles & Permissions</a>
+            <a href="settings.php" class="nav-link">System Settings</a>
+            <a href="cms_landing.php" class="nav-link">Landing Page CMS</a>
+            <a href="pages.php" class="nav-link">Custom Pages</a>
             <a href="audit.php" class="nav-link">Audit Trail</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </nav>
@@ -225,6 +236,7 @@ $beneficiaries = $beneficiaryService->getAll();
                             <th>State</th>
                             <th>Status</th>
                             <th>Joined</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -243,6 +255,9 @@ $beneficiaries = $beneficiaryService->getAll();
                                 <td><?php echo htmlspecialchars($b['state_of_origin'] ?? 'N/A'); ?></td>
                                 <td><span style="color: #059669; font-weight: 600;">Verified</span></td>
                                 <td><?php echo date('M j, Y', strtotime($b['created_at'])); ?></td>
+                                <td>
+                                    <a href="nin_slip.php?id=<?php echo $b['id']; ?>" target="_blank" style="color: var(--primary); font-size: 0.875rem; font-weight: 600;">Print Slip</a>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -257,6 +272,7 @@ $beneficiaries = $beneficiaryService->getAll();
             <h4 style="margin-top: 0;">Verify & Register Beneficiary</h4>
             <p style="font-size: 0.875rem; color: #6b7280; margin-bottom: 1.5rem;">Enter the farmer's NIN to fetch data from the national identity database.</p>
             <form method="POST">
+                <?php csrf_field(); ?>
                 <div class="form-group">
                     <label>NIN (11 Digits)</label>
                     <input type="text" name="nin" pattern="\d{11}" required placeholder="e.g. 12345678901">

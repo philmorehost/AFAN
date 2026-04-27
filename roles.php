@@ -11,6 +11,9 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $adminService = new AdminService($db);
+if (!$adminService->hasPermission($_SESSION['user_id'], 'manage_admins')) {
+    die("Unauthorized access: You do not have permission to manage roles.");
+}
 
 // Predefined Permission Keys
 $available_permissions = [
@@ -26,6 +29,9 @@ $message = '';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_role'])) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF token validation failed.");
+    }
     $role_name = sanitize($_POST['role_name']);
     $permissions = $_POST['permissions'] ?? [];
 
@@ -118,6 +124,7 @@ $roles = $adminService->getRoles();
         <div class="card">
             <h4 style="margin-top: 0;">Create New Role</h4>
             <form method="POST">
+                <?php csrf_field(); ?>
                 <div class="form-group">
                     <label>Role Name</label>
                     <input type="text" name="role_name" placeholder="e.g. Regional Manager" required>

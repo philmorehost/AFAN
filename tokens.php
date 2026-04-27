@@ -10,6 +10,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$adminService = new AdminService($db);
+if (!$adminService->hasPermission($_SESSION['user_id'], 'manage_tokens')) {
+    die("Unauthorized access: You do not have permission to manage tokens.");
+}
+
 $comm = new CommService();
 $tokenService = new TokenService($db, $comm);
 $programService = new ProgramService($db);
@@ -20,6 +25,9 @@ $error = '';
 
 // Handle Token Issuance
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['issue_token'])) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF token validation failed.");
+    }
     $beneficiary_id = $_POST['beneficiary_id'] ?? '';
     $program_id = $_POST['program_id'] ?? '';
 
@@ -33,6 +41,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['issue_token'])) {
 
 // Handle Token Redemption
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['redeem_token'])) {
+    if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF token validation failed.");
+    }
     $code = $_POST['token_code'] ?? '';
     $result = $tokenService->redeemToken($code, $_SESSION['user_id']);
 
@@ -177,6 +188,9 @@ $redemptions = $tokenService->getRecentRedemptions(20);
             <a href="tokens.php" class="nav-link active">Token Redemption</a>
             <a href="admins.php" class="nav-link">Administrators</a>
             <a href="roles.php" class="nav-link">Roles & Permissions</a>
+            <a href="settings.php" class="nav-link">System Settings</a>
+            <a href="cms_landing.php" class="nav-link">Landing Page CMS</a>
+            <a href="pages.php" class="nav-link">Custom Pages</a>
             <a href="audit.php" class="nav-link">Audit Trail</a>
             <a href="logout.php" class="nav-link">Logout</a>
         </nav>
@@ -199,6 +213,7 @@ $redemptions = $tokenService->getRecentRedemptions(20);
             <div class="card">
                 <h4 style="margin-top: 0;">Issue New Token</h4>
                 <form method="POST">
+                    <?php csrf_field(); ?>
                     <div class="form-group">
                         <label>Beneficiary</label>
                         <select name="beneficiary_id" required>
@@ -225,6 +240,7 @@ $redemptions = $tokenService->getRecentRedemptions(20);
             <div class="card" style="border-top: 4px solid #f59e0b;">
                 <h4 style="margin-top: 0;">Redeem Token</h4>
                 <form method="POST">
+                    <?php csrf_field(); ?>
                     <div class="form-group">
                         <label>Token Code</label>
                         <input type="text" name="token_code" placeholder="e.g. AF78X2" required style="font-family: monospace; font-size: 1.25rem; text-align: center; text-transform: uppercase;">

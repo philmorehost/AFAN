@@ -11,22 +11,31 @@ class CommService {
     private $emailConfig;
     private $smsConfig;
 
-    public function __construct() {
-        // Load configurations from global constants defined in config.php
+    public function __construct($db = null) {
+        $settings = null;
+        if ($db) {
+            $settingsService = new SettingsService($db);
+            $settings = [
+                'smtp' => $settingsService->getByGroup('smtp'),
+                'sms' => $settingsService->getByGroup('sms')
+            ];
+        }
+
+        // Load configurations: DB settings take precedence over config.php constants
         $this->emailConfig = [
-            'host'       => defined('SMTP_HOST') ? SMTP_HOST : '',
-            'port'       => defined('SMTP_PORT') ? SMTP_PORT : 587,
-            'auth'       => defined('SMTP_AUTH') ? SMTP_AUTH : true,
-            'user'       => defined('SMTP_USER') ? SMTP_USER : '',
-            'pass'       => defined('SMTP_PASS') ? SMTP_PASS : '',
+            'host'       => $settings['smtp']['smtp_host'] ?? (defined('SMTP_HOST') ? SMTP_HOST : ''),
+            'port'       => $settings['smtp']['smtp_port'] ?? (defined('SMTP_PORT') ? SMTP_PORT : 587),
+            'auth'       => true,
+            'user'       => $settings['smtp']['smtp_user'] ?? (defined('SMTP_USER') ? SMTP_USER : ''),
+            'pass'       => $settings['smtp']['smtp_pass'] ?? (defined('SMTP_PASS') ? SMTP_PASS : ''),
             'encryption' => defined('SMTP_ENCR') ? SMTP_ENCR : 'tls',
-            'from_email' => defined('SMTP_FROM') ? SMTP_FROM : '',
+            'from_email' => $settings['smtp']['smtp_from'] ?? (defined('SMTP_FROM') ? SMTP_FROM : ''),
             'from_name'  => defined('APP_NAME') ? APP_NAME : 'AFAN Platform'
         ];
 
         $this->smsConfig = [
-            'api_key'  => defined('SMS_API_KEY') ? SMS_API_KEY : '',
-            'sender_id' => defined('SMS_SENDER_ID') ? SMS_SENDER_ID : 'AFAN-FISP',
+            'api_key'  => $settings['sms']['sms_api_key'] ?? (defined('SMS_API_KEY') ? SMS_API_KEY : ''),
+            'sender_id' => $settings['sms']['sms_sender_id'] ?? (defined('SMS_SENDER_ID') ? SMS_SENDER_ID : 'AFAN-FISP'),
             'api_url'  => 'https://philmoresms.com/api/v2/sms/send'
         ];
     }
@@ -35,6 +44,8 @@ class CommService {
      * Send Transactional Email
      */
     public function sendEmail($to, $subject, $body, $isHtml = true) {
+        if (empty($this->emailConfig['host'])) return false;
+
         $mail = new PHPMailer(true);
 
         try {
@@ -73,7 +84,6 @@ class CommService {
         $recipientList = is_array($recipients) ? $recipients : explode(',', $recipients);
 
         $results = [];
-        // PhilmoreSMS v2 typically uses a JSON payload for sending
         foreach ($recipientList as $recipient) {
             $payload = [
                 'sender_id' => $this->smsConfig['sender_id'],

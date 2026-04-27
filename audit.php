@@ -10,6 +10,11 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$adminService = new AdminService($db);
+if (!$adminService->hasPermission($_SESSION['user_id'], 'view_audit')) {
+    die("Unauthorized access: You do not have permission to view audit logs.");
+}
+
 $table = 'audit_trail_' . date('Y_m');
 $logs = [];
 

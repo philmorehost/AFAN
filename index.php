@@ -1,7 +1,7 @@
 <?php
 /**
  * AFAN Food Security Platform
- * Modern Landing Page
+ * Modern Landing Page (Dynamic Content)
  */
 
 if (!file_exists('inc/config.php')) {
@@ -10,6 +10,21 @@ if (!file_exists('inc/config.php')) {
 }
 
 require_once 'inc/init.php';
+
+$sections = [];
+$customPages = [];
+
+if (isset($db) && $db) {
+    $settingsService = new SettingsService($db);
+    $sections = $settingsService->getLandingSections();
+    $customPages = $settingsService->getPages(true);
+}
+
+// Default content if not in DB
+$hero = $sections['hero'] ?? ['title' => 'Securing the Future of Agriculture', 'content' => 'The AFAN Food Security Platform streamlines beneficiary management and resource distribution for Nigerian farmers.'];
+$featHeader = $sections['features_header'] ?? ['title' => 'Advanced Distribution Management', 'content' => 'Built with modern technology to ensure transparency and efficiency in every transaction.'];
+$cta = $sections['cta'] ?? ['title' => 'Ready to manage distribution?', 'content' => 'Sign in to the administrative portal to get started.'];
+
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -232,11 +247,14 @@ require_once 'inc/init.php';
     <header>
         <div class="container">
             <nav>
-                <a href="#" class="logo">
+                <a href="index.php" class="logo">
                     <span style="color: var(--secondary);">AFAN</span> FISP
                 </a>
                 <div class="nav-links">
                     <a href="#features">Features</a>
+                    <?php foreach ($customPages as $p): ?>
+                        <a href="page.php?slug=<?php echo $p['slug']; ?>"><?php echo htmlspecialchars($p['title']); ?></a>
+                    <?php endforeach; ?>
                     <a href="dashboard.php" class="btn btn-outline">Admin Portal</a>
                 </div>
             </nav>
@@ -246,8 +264,8 @@ require_once 'inc/init.php';
     <main>
         <section class="hero container">
             <div class="hero-content">
-                <h1>Securing the Future of <span style="color: var(--primary);">Agriculture</span></h1>
-                <p>The AFAN Food Security Platform streamlines beneficiary management and resource distribution for Nigerian farmers.</p>
+                <h1><?php echo htmlspecialchars($hero['title']); ?></h1>
+                <p><?php echo nl2br(htmlspecialchars($hero['content'])); ?></p>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                     <a href="dashboard.php" class="btn btn-primary">Access Dashboard</a>
                     <a href="#features" class="btn btn-outline">Learn More</a>
@@ -263,8 +281,8 @@ require_once 'inc/init.php';
         <section id="features" class="features">
             <div class="container">
                 <div class="section-header">
-                    <h2>Advanced Distribution Management</h2>
-                    <p>Built with modern technology to ensure transparency and efficiency in every transaction.</p>
+                    <h2><?php echo htmlspecialchars($featHeader['title']); ?></h2>
+                    <p><?php echo nl2br(htmlspecialchars($featHeader['content'])); ?></p>
                 </div>
 
                 <div class="feature-grid">
@@ -289,8 +307,8 @@ require_once 'inc/init.php';
 
         <section class="cta container">
             <div class="cta-box">
-                <h2>Ready to manage distribution?</h2>
-                <p style="margin-bottom: 2rem; opacity: 0.8;">Sign in to the administrative portal to get started.</p>
+                <h2><?php echo htmlspecialchars($cta['title']); ?></h2>
+                <p style="margin-bottom: 2rem; opacity: 0.8;"><?php echo nl2br(htmlspecialchars($cta['content'])); ?></p>
                 <a href="dashboard.php" class="btn btn-primary" style="background: white; color: var(--dark);">Go to Dashboard</a>
             </div>
         </section>

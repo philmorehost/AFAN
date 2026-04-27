@@ -59,3 +59,38 @@ CREATE TABLE IF NOT EXISTS tokens (
     FOREIGN KEY (beneficiary_id) REFERENCES beneficiaries(id),
     FOREIGN KEY (redeemed_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Settings Table
+CREATE TABLE IF NOT EXISTS settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT,
+    setting_group VARCHAR(50) DEFAULT 'general',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Landing Page Sections
+CREATE TABLE IF NOT EXISTS landing_sections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    section_key VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(255),
+    content TEXT,
+    image_url VARCHAR(255),
+    sort_order INT DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Dynamic Pages
+CREATE TABLE IF NOT EXISTS pages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    content LONGTEXT,
+    is_published BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Seed default landing sections
+INSERT INTO landing_sections (section_key, title, content, sort_order) VALUES
+('hero', 'Securing the Future of Agriculture', 'The AFAN Food Security Platform streamlines beneficiary management and resource distribution for Nigerian farmers.', 1),
+('features_header', 'Advanced Distribution Management', 'Built with modern technology to ensure transparency and efficiency in every transaction.', 2),
+('cta', 'Ready to manage distribution?', 'Sign in to the administrative portal to get started.', 3);
