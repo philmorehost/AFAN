@@ -80,6 +80,27 @@ class AdminService {
         return $this->db->query("SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id ORDER BY u.id ASC")->fetchAll();
     }
 
+    public function getAdmin($id) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
+    public function updateAdmin($id, $username, $email, $role_id, $password = null) {
+        if ($password) {
+            $stmt = $this->db->prepare("UPDATE users SET username = ?, email = ?, role_id = ?, password = ? WHERE id = ?");
+            return $stmt->execute([$username, $email, $role_id, password_hash($password, PASSWORD_DEFAULT), $id]);
+        } else {
+            $stmt = $this->db->prepare("UPDATE users SET username = ?, email = ?, role_id = ? WHERE id = ?");
+            return $stmt->execute([$username, $email, $role_id, $id]);
+        }
+    }
+
+    public function deleteAdmin($id) {
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
     // --- Permission Check ---
 
     public function hasPermission($user_id, $permission_key) {

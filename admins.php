@@ -21,21 +21,60 @@ $admins = $adminService->getAdmins();
 $message = '';
 $error = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
+// Handle Delete
+if (isset($_GET['delete']) && is_numeric($_GET['delete'])) {
+    $id = (int)$_GET['delete'];
+    if ($id == $_SESSION['user_id']) {
+        $error = "You cannot delete your own account.";
+    } else {
+        if ($adminService->deleteAdmin($id)) {
+            $message = "Administrator deleted successfully.";
+            $admins = $adminService->getAdmins();
+        } else {
+            $error = "Failed to delete administrator.";
+        }
+    }
+}
+
+// Handle Form Submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!validate_csrf_token($_POST['csrf_token'] ?? '')) {
         die("CSRF token validation failed.");
     }
-    $username = sanitize($_POST['username']);
-    $email = sanitize($_POST['email'], 'email');
-    $password = $_POST['password'];
-    $role_id = (int)$_POST['role_id'];
 
-    if ($adminService->createAdmin($username, $email, $password, $role_id)) {
-        $message = "Administrator created successfully!";
-        $admins = $adminService->getAdmins(); // Refresh list
-    } else {
-        $error = "Error creating administrator.";
+    if (isset($_POST['create_admin'])) {
+        $username = sanitize($_POST['username']);
+        $email = sanitize($_POST['email'], 'email');
+        $password = $_POST['password'];
+        $role_id = (int)$_POST['role_id'];
+
+        if ($adminService->createAdmin($username, $email, $password, $role_id)) {
+            $message = "Administrator created successfully!";
+            $admins = $adminService->getAdmins();
+        } else {
+            $error = "Error creating administrator.";
+        }
     }
+
+    if (isset($_POST['update_admin'])) {
+        $id = (int)$_POST['admin_id'];
+        $username = sanitize($_POST['username']);
+        $email = sanitize($_POST['email'], 'email');
+        $password = !empty($_POST['password']) ? $_POST['password'] : null;
+        $role_id = (int)$_POST['role_id'];
+
+        if ($adminService->updateAdmin($id, $username, $email, $role_id, $password)) {
+            $message = "Administrator updated successfully!";
+            $admins = $adminService->getAdmins();
+        } else {
+            $error = "Error updating administrator.";
+        }
+    }
+}
+
+$editAdmin = null;
+if (isset($_GET['edit']) && is_numeric($_GET['edit'])) {
+    $editAdmin = $adminService->getAdmin((int)$_GET['edit']);
 }
 ?>
 <!DOCTYPE html>
@@ -98,6 +137,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
         th, td { text-align: left; padding: 1rem; border-bottom: 1px solid #f3f4f6; }
         th { color: #6b7280; font-weight: 600; }
         .badge { padding: 0.25rem 0.5rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; background: #d1fae5; color: #065f46; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.875rem; text-decoration: none; display: inline-block; border-radius: 0.3rem; }
+        .btn-edit { background: #3b82f6; color: white; }
+        .btn-delete { background: #ef4444; color: white; }
     </style>
 </head>
 <body>
@@ -131,32 +173,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
         <?php endif; ?>
 
         <div class="card">
-            <h4 style="margin-top: 0;">Add New Administrator</h4>
-            <form method="POST">
+            <h4 style="margin-top: 0;"><?php echo $editAdmin ? 'Edit Administrator' : 'Add New Administrator'; ?></h4>
+            <form method="POST" action="admins.php">
                 <?php csrf_field(); ?>
+                <?php if ($editAdmin): ?>
+                    <input type="hidden" name="admin_id" value="<?php echo $editAdmin['id']; ?>">
+                <?php endif; ?>
+
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div class="form-group">
                         <label>Username</label>
-                        <input type="text" name="username" required>
+                        <input type="text" name="username" value="<?php echo $editAdmin ? htmlspecialchars($editAdmin['username']) : ''; ?>" required>
                     </div>
                     <div class="form-group">
                         <label>Email Address</label>
-                        <input type="email" name="email" required>
+                        <input type="email" name="email" value="<?php echo $editAdmin ? htmlspecialchars($editAdmin['email']) : ''; ?>" required>
                     </div>
                     <div class="form-group">
-                        <label>Password</label>
-                        <input type="password" name="password" required>
+                        <label>Password <?php echo $editAdmin ? '(Leave blank to keep current)' : ''; ?></label>
+                        <input type="password" name="password" <?php echo $editAdmin ? '' : 'required'; ?>>
                     </div>
                     <div class="form-group">
                         <label>Role</label>
                         <select name="role_id" required>
                             <?php foreach ($roles as $role): ?>
-                                <option value="<?php echo $role['id']; ?>"><?php echo htmlspecialchars($role['name']); ?></option>
+                                <option value="<?php echo $role['id']; ?>" <?php echo ($editAdmin && $editAdmin['role_id'] == $role['id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($role['name']); ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
                 </div>
-                <button type="submit" name="create_admin" class="btn" style="margin-top: 1rem;">Create Admin Account</button>
+
+                <div style="margin-top: 1rem; display: flex; gap: 1rem;">
+                    <?php if ($editAdmin): ?>
+                        <button type="submit" name="update_admin" class="btn">Update Account</button>
+                        <a href="admins.php" class="btn" style="background: #6b7280; text-decoration: none; text-align: center;">Cancel</a>
+                    <?php else: ?>
+                        <button type="submit" name="create_admin" class="btn">Create Admin Account</button>
+                    <?php endif; ?>
+                </div>
             </form>
         </div>
 
@@ -170,6 +226,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
                             <th>Email</th>
                             <th>Role</th>
                             <th>Created</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -179,6 +236,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
                                 <td><?php echo htmlspecialchars($admin['email']); ?></td>
                                 <td><span class="badge"><?php echo htmlspecialchars($admin['role_name'] ?? 'No Role'); ?></span></td>
                                 <td><?php echo date('M j, Y', strtotime($admin['created_at'])); ?></td>
+                                <td>
+                                    <a href="admins.php?edit=<?php echo $admin['id']; ?>" class="btn-sm btn-edit">Edit</a>
+                                    <?php if ($admin['id'] != $_SESSION['user_id']): ?>
+                                        <a href="admins.php?delete=<?php echo $admin['id']; ?>" class="btn-sm btn-delete" onclick="return confirm('Are you sure you want to delete this admin?')">Delete</a>
+                                    <?php endif; ?>
+                                </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
