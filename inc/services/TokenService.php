@@ -29,12 +29,22 @@ class TokenService {
                 
                 $msg = "Hello {$beneficiary['name']}, your AFAN token for {$program['name']} is: {$token_code}. Present this to any authorized agent for redemption.";
                 
-                // SMS
+                // SMS (Plain Text)
                 $this->comm->sendSMS($beneficiary['phone'], $msg);
                 
-                // Email if available
+                // Email (Modern HTML)
                 if (!empty($beneficiary['email'])) {
-                    $this->comm->sendEmail($beneficiary['email'], "AFAN Token Assigned", $msg);
+                    $emailContent = "
+                        <p>Hello {$beneficiary['name']},</p>
+                        <p>A new distribution token has been assigned to you for the following program:</p>
+                        <p><strong>Program:</strong> {$program['name']}</p>
+                        <div style='text-align: center;'>
+                            <div class='token-badge'>{$token_code}</div>
+                        </div>
+                        <p>Please present this token to any authorized AFAN agent to receive your inputs/benefits.</p>
+                    ";
+                    $htmlBody = get_email_template("New Token Assigned", $emailContent);
+                    $this->comm->sendEmail($beneficiary['email'], "AFAN Token Assigned", $htmlBody);
                 }
             }
             
@@ -70,7 +80,19 @@ class TokenService {
                 $this->comm->sendSMS($token['b_phone'], $msg);
                 
                 if (!empty($token['b_email'])) {
-                    $this->comm->sendEmail($token['b_email'], "AFAN Token Redeemed", $msg);
+                    $emailContent = "
+                        <p>Hello {$token['b_name']},</p>
+                        <p>This is to confirm that your token has been successfully redeemed.</p>
+                        <div class='alert-box' style='border-left-color: #059669; background-color: #ecfdf5;'>
+                            <strong>Redemption Details:</strong><br>
+                            Program: {$token['p_name']}<br>
+                            Token: {$token_code}<br>
+                            Date: " . date('F j, Y, g:i a') . "
+                        </div>
+                        <p>Thank you for participating in the AFAN Food Security Program.</p>
+                    ";
+                    $htmlBody = get_email_template("Token Redeemed Successfully", $emailContent);
+                    $this->comm->sendEmail($token['b_email'], "AFAN Token Redeemed", $htmlBody);
                 }
             }
 
@@ -78,6 +100,32 @@ class TokenService {
         }
 
         return ['success' => false, 'message' => 'System error during redemption.'];
+    }
+
+    /**
+     * Count tokens
+     */
+    public function countIssued() {
+        return $this->db->query("SELECT COUNT(*) FROM tokens")->fetchColumn();
+    }
+
+    public function countRedeemed() {
+        return $this->db->query("SELECT COUNT(*) FROM tokens WHERE status = 'redeemed'")->fetchColumn();
+    }
+
+    /**
+     * Get recent redemptions
+     */
+    public function getRecentRedemptions($limit = 10) {
+        $stmt = $this->db->prepare("SELECT t.*, b.name as beneficiary_name, p.name as program_name
+                                   FROM tokens t
+                                   JOIN beneficiaries b ON t.beneficiary_id = b.id
+                                   JOIN programs p ON t.program_id = p.id
+                                   WHERE t.status = 'redeemed'
+                                   ORDER BY t.redeemed_at DESC LIMIT ?");
+        $stmt->bindValue(1, (int)$limit, PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll();
     }
 
     private function getBeneficiary($id) {

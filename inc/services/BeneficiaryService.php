@@ -5,23 +5,68 @@
 
 class BeneficiaryService {
     private $db;
+    private $ninApiKey;
 
     public function __construct($db) {
         $this->db = $db;
+
+        $settingsService = new SettingsService($db);
+        $db_nin_key = $settingsService->get('nin_api_key');
+
+        $this->ninApiKey = $db_nin_key ?: (defined('NIN_API_KEY') ? NIN_API_KEY : '');
     }
 
     /**
-     * Add a single beneficiary
+     * Verify NIN via Datagifting API
      */
-    public function addBeneficiary($data) {
-        $stmt = $this->db->prepare("INSERT INTO beneficiaries (name, phone, email, location, nin_number, farm_size) VALUES (?, ?, ?, ?, ?, ?)");
+    public function verifyNIN($nin) {
+        if (empty($this->ninApiKey)) {
+            return ['status' => 'error', 'message' => 'NIN Verification API Key not configured.'];
+        }
+
+        $url = "https://v6.datagifting.com.ng/web/api/nin-card.php";
+        $data = [
+            'api_key' => $this->ninApiKey,
+            'nin'     => $nin
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+
+        $response = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($error) {
+            return ['status' => 'error', 'message' => 'NIN API connection error: ' . $error];
+        }
+
+        return json_decode($response, true);
+    }
+
+    /**
+     * Register a new beneficiary
+     */
+    public function register($data) {
+        // Check if exists
+        $check = $this->db->prepare("SELECT id FROM beneficiaries WHERE nin = ? OR phone = ?");
+        $check->execute([$data['nin'] ?? '', $data['phone'] ?? '']);
+        if ($check->fetch()) return false;
+
+        $stmt = $this->db->prepare("INSERT INTO beneficiaries (name, phone, email, nin, gender, state_of_origin, photo) VALUES (?, ?, ?, ?, ?, ?, ?)");
         return $stmt->execute([
             $data['name'],
             $data['phone'],
             $data['email'] ?? null,
-            $data['location'] ?? null,
-            $data['nin_number'] ?? null,
-            $data['farm_size'] ?? 0
+            $data['nin'],
+            $data['gender'] ?? null,
+            $data['state_of_origin'] ?? null,
+            $data['photo'] ?? null
         ]);
     }
 
@@ -37,35 +82,9 @@ class BeneficiaryService {
     }
 
     /**
-     * Import beneficiaries from CSV
+     * Count total beneficiaries
      */
-    public function importCSV($filePath) {
-        $handle = fopen($filePath, "r");
-        if (!$handle) return false;
-
-        $header = fgetcsv($handle); // Skip header
-        $count = 0;
-
-        $this->db->beginTransaction();
-        try {
-            while (($data = fgetcsv($handle)) !== FALSE) {
-                // Assuming columns: Name, Phone, Email, Location, NIN, FarmSize
-                $this->addBeneficiary([
-                    'name'      => $data[0],
-                    'phone'     => $data[1],
-                    'email'     => $data[2] ?? null,
-                    'location'  => $data[3] ?? null,
-                    'nin_number'=> $data[4] ?? null,
-                    'farm_size' => $data[5] ?? 0
-                ]);
-                $count++;
-            }
-            $this->db->commit();
-            return $count;
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            error_log("Import Error: " . $e->getMessage());
-            return false;
-        }
+    public function countAll() {
+        return $this->db->query("SELECT COUNT(*) FROM beneficiaries")->fetchColumn();
     }
 }

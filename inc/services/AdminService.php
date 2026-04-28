@@ -10,6 +10,43 @@ class AdminService {
         $this->db = $db;
     }
 
+    /**
+     * Authenticate Administrator
+     */
+    public function authenticate($username, $password) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE username = ? OR email = ?");
+        $stmt->execute([$username, $username]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user['password'])) {
+            // Log Login Attempt
+            log_audit($user['id'], 'login', "Admin logged in from IP: " . ($_SERVER['REMOTE_ADDR'] ?? 'Unknown'));
+
+            // Automated Trigger: Admin/Agent Login Alert (SMTP)
+            $comm = new CommService($this->db);
+            $ip = $_SERVER['REMOTE_ADDR'] ?? 'Unknown';
+            $timestamp = date('F j, Y, g:i a');
+
+            $emailContent = "
+                <p>A new login to your AFAN administrative account was detected.</p>
+                <div class='alert-box'>
+                    <strong>Login Details:</strong><br>
+                    User: {$user['username']}<br>
+                    Time: {$timestamp}<br>
+                    IP Address: {$ip}
+                </div>
+                <p>If this was not you, please secure your account immediately or contact the system administrator.</p>
+            ";
+
+            $htmlBody = get_email_template("Security Alert: Login Detected", $emailContent);
+            $comm->sendEmail($user['email'], "Security Alert: Admin Login Detected", $htmlBody);
+
+            return $user;
+        }
+
+        return false;
+    }
+
     // --- Role Management ---
 
     public function createRole($name, $permissions) {
@@ -43,6 +80,27 @@ class AdminService {
         return $this->db->query("SELECT u.*, r.name as role_name FROM users u LEFT JOIN roles r ON u.role_id = r.id ORDER BY u.id ASC")->fetchAll();
     }
 
+    public function getAdmin($id) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE id = ?");
+        $stmt->execute([$id]);
+        return $stmt->fetch();
+    }
+
+    public function updateAdmin($id, $username, $email, $role_id, $password = null) {
+        if ($password) {
+            $stmt = $this->db->prepare("UPDATE users SET username = ?, email = ?, role_id = ?, password = ? WHERE id = ?");
+            return $stmt->execute([$username, $email, $role_id, password_hash($password, PASSWORD_DEFAULT), $id]);
+        } else {
+            $stmt = $this->db->prepare("UPDATE users SET username = ?, email = ?, role_id = ? WHERE id = ?");
+            return $stmt->execute([$username, $email, $role_id, $id]);
+        }
+    }
+
+    public function deleteAdmin($id) {
+        $stmt = $this->db->prepare("DELETE FROM users WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
     // --- Permission Check ---
 
     public function hasPermission($user_id, $permission_key) {
@@ -55,8 +113,8 @@ class AdminService {
         $permissions = json_decode($role['permissions'], true);
         
         // Super Admin check (if 'all' is in permissions)
-        if (in_array('all', $permissions)) return true;
+        if (is_array($permissions) && in_array('all', $permissions)) return true;
 
-        return in_array($permission_key, $permissions);
+        return is_array($permissions) && in_array($permission_key, $permissions);
     }
 }

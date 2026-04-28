@@ -26,19 +26,22 @@ CREATE TABLE IF NOT EXISTS beneficiaries (
     phone VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(100),
     location VARCHAR(255),
-    nin_number VARCHAR(20) UNIQUE,
-    farm_size DECIMAL(10,2),
+    nin VARCHAR(20) UNIQUE,
+    gender VARCHAR(10),
+    state_of_origin VARCHAR(50),
+    photo LONGTEXT, -- Base64 encoded photo from NIN API
+    farm_size DECIMAL(10,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Programs Table (e.g., Fertilizer Support 2024)
+-- Programs Table
 CREATE TABLE IF NOT EXISTS programs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
     start_date DATE,
     end_date DATE,
-    status ENUM('active', 'closed') DEFAULT 'active',
+    status ENUM('active', 'inactive', 'closed') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
@@ -57,5 +60,37 @@ CREATE TABLE IF NOT EXISTS tokens (
     FOREIGN KEY (redeemed_by) REFERENCES users(id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
--- Audit Trail (Partitioned logic handled in PHP, but here is the base structure)
--- audit_trail_YYYY_MM
+-- Settings Table
+CREATE TABLE IF NOT EXISTS settings (
+    setting_key VARCHAR(100) PRIMARY KEY,
+    setting_value TEXT,
+    setting_group VARCHAR(50) DEFAULT 'general',
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Landing Page Sections
+CREATE TABLE IF NOT EXISTS landing_sections (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    section_key VARCHAR(50) UNIQUE NOT NULL,
+    title VARCHAR(255),
+    content TEXT,
+    image_url VARCHAR(255),
+    sort_order INT DEFAULT 0
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Dynamic Pages
+CREATE TABLE IF NOT EXISTS pages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
+    content LONGTEXT,
+    is_published BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Seed default landing sections
+INSERT INTO landing_sections (section_key, title, content, sort_order) VALUES
+('hero', 'Securing the Future of Agriculture', 'The AFAN Food Security Platform streamlines beneficiary management and resource distribution for Nigerian farmers.', 1),
+('features_header', 'Strategic Impact & Key Initiatives', 'Driving food security through technology, partnerships, and direct farmer support.', 2),
+('cta', 'Ready to manage distribution?', 'Sign in to the administrative portal to get started.', 3);

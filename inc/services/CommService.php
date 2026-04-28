@@ -1,31 +1,49 @@
 <?php
 /**
  * AFAN Communication Service
- * Handles SMTP Email via PHPMailer and SMS via PhilmoreSMS API
+ * Handles SMTP Email via PHPMailer and SMS via PhilmoreSMS API (v2)
  */
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+// Fallback for non-composer environments
+if (!class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+    require_once __DIR__ . '/../libs/PHPMailer/Exception.php';
+    require_once __DIR__ . '/../libs/PHPMailer/PHPMailer.php';
+    require_once __DIR__ . '/../libs/PHPMailer/SMTP.php';
+}
 
 class CommService {
     private $emailConfig;
     private $smsConfig;
 
-    public function __construct() {
-        // Load configurations from global constants defined in config.php
+    public function __construct($db = null) {
+        $settings = null;
+        if ($db) {
+            $settingsService = new SettingsService($db);
+            $settings = [
+                'smtp' => $settingsService->getByGroup('smtp'),
+                'sms' => $settingsService->getByGroup('sms')
+            ];
+        }
+
+        // Load configurations: DB settings take precedence over config.php constants
         $this->emailConfig = [
-            'host'       => defined('SMTP_HOST') ? SMTP_HOST : '',
-            'port'       => defined('SMTP_PORT') ? SMTP_PORT : 587,
-            'auth'       => defined('SMTP_AUTH') ? SMTP_AUTH : true,
-            'user'       => defined('SMTP_USER') ? SMTP_USER : '',
-            'pass'       => defined('SMTP_PASS') ? SMTP_PASS : '',
+            'host'       => $settings['smtp']['smtp_host'] ?? (defined('SMTP_HOST') ? SMTP_HOST : ''),
+            'port'       => $settings['smtp']['smtp_port'] ?? (defined('SMTP_PORT') ? SMTP_PORT : 587),
+            'auth'       => true,
+            'user'       => $settings['smtp']['smtp_user'] ?? (defined('SMTP_USER') ? SMTP_USER : ''),
+            'pass'       => $settings['smtp']['smtp_pass'] ?? (defined('SMTP_PASS') ? SMTP_PASS : ''),
             'encryption' => defined('SMTP_ENCR') ? SMTP_ENCR : 'tls',
-            'from_email' => defined('SMTP_FROM') ? SMTP_FROM : '',
+            'from_email' => $settings['smtp']['smtp_from'] ?? (defined('SMTP_FROM') ? SMTP_FROM : ''),
             'from_name'  => defined('APP_NAME') ? APP_NAME : 'AFAN Platform'
         ];
 
         $this->smsConfig = [
-            'token'    => defined('SMS_TOKEN') ? SMS_TOKEN : '',
-            'senderID' => defined('SMS_SENDER_ID') ? SMS_SENDER_ID : 'AFAN-FISP',
-            'api_url'  => 'https://app.philmoresms.com/api/sms.php',
-            'bal_url'  => 'https://app.philmoresms.com/api/balance.php'
+            'api_key'  => $settings['sms']['sms_api_key'] ?? (defined('SMS_API_KEY') ? SMS_API_KEY : ''),
+            'sender_id' => $settings['sms']['sms_sender_id'] ?? (defined('SMS_SENDER_ID') ? SMS_SENDER_ID : 'AFAN-FISP'),
+            'api_url'  => 'https://philmoresms.com/api/v2/sms/send'
         ];
     }
 
@@ -33,13 +51,9 @@ class CommService {
      * Send Transactional Email
      */
     public function sendEmail($to, $subject, $body, $isHtml = true) {
-        // PHPMailer Integration
-        // Note: Assuming PHPMailer is placed in vendor/phpmailer/
-        require_once dirname(__DIR__, 2) . '/vendor/phpmailer/src/Exception.php';
-        require_once dirname(__DIR__, 2) . '/vendor/phpmailer/src/PHPMailer.php';
-        require_once dirname(__DIR__, 2) . '/vendor/phpmailer/src/SMTP.php';
+        if (empty($this->emailConfig['host'])) return false;
 
-        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        $mail = new PHPMailer(true);
 
         try {
             // Server settings
@@ -48,9 +62,9 @@ class CommService {
             $mail->SMTPAuth   = $this->emailConfig['auth'];
             $mail->Username   = $this->emailConfig['user'];
             $mail->Password   = $this->emailConfig['pass'];
-            $mail->SMTPSecure = $this->emailConfig['encryption'];
+            $mail->SMTPSecure = $this->emailConfig['encryption'] === 'none' ? '' : $this->emailConfig['encryption'];
             $mail->Port       = $this->emailConfig['port'];
-            $mail->Timeout    = 10; // Fast handshake
+            $mail->Timeout    = 10;
 
             // Recipients
             $mail->setFrom($this->emailConfig['from_email'], $this->emailConfig['from_name']);
@@ -69,52 +83,60 @@ class CommService {
     }
 
     /**
-     * Send SMS via PhilmoreSMS API
+     * Send SMS via PhilmoreSMS API v2
      */
     public function sendSMS($recipients, $message) {
-        if (empty($this->smsConfig['token'])) return false;
+        if (empty($this->smsConfig['api_key'])) return false;
 
-        $payload = [
-            'token'      => $this->smsConfig['token'],
-            'senderID'   => $this->smsConfig['senderID'],
-            'recipients' => is_array($recipients) ? implode(',', $recipients) : $recipients,
-            'message'    => $message
-        ];
+        $recipientList = is_array($recipients) ? $recipients : explode(',', $recipients);
 
-        return $this->apiCall($this->smsConfig['api_url'], $payload);
+        $results = [];
+        foreach ($recipientList as $recipient) {
+            $payload = [
+                'sender_id' => $this->smsConfig['sender_id'],
+                'recipient' => trim($recipient),
+                'message'   => $message
+            ];
+
+            $response = $this->apiCall($this->smsConfig['api_url'], $payload);
+            $results[] = $response;
+        }
+
+        return $results;
     }
 
     /**
-     * Check SMS Wallet Balance
-     */
-    public function getSMSBalance() {
-        if (empty($this->smsConfig['token'])) return false;
-
-        $payload = ['token' => $this->smsConfig['token']];
-        return $this->apiCall($this->smsConfig['bal_url'], $payload);
-    }
-
-    /**
-     * Execute API Call via cURL
+     * Execute API Call via cURL with Header-based Auth
      */
     private function apiCall($url, $data) {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10); // 10s timeout limit
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Authorization: Bearer ' . $this->smsConfig['api_key'],
+            'Content-Type: application/json',
+            'Accept: application/json'
+        ]);
 
         $response = curl_exec($ch);
         $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($error) {
             error_log("SMS API Error: " . $error);
-            return false;
+            return ['status' => 'error', 'message' => $error];
         }
 
-        return json_decode($response, true);
+        $result = json_decode($response, true);
+        if ($httpCode >= 400 || (isset($result['status']) && ($result['status'] === 'error' || $result['status'] === false))) {
+            return ['status' => 'error', 'message' => $result['message'] ?? 'API error'];
+        }
+
+        return ['status' => 'success', 'data' => $result];
     }
 }

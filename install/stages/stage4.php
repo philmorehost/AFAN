@@ -18,8 +18,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $config_content .= "define('DB_USER', '" . addslashes($data['db']['user']) . "');\n";
     $config_content .= "define('DB_PASS', '" . addslashes($data['db']['pass']) . "');\n\n";
     
-    $config_content .= "define('SMS_TOKEN', '" . addslashes($data['sms']['token']) . "');\n";
+    $config_content .= "define('SMS_API_KEY', '" . addslashes($data['sms']['api_key']) . "');\n";
     $config_content .= "define('SMS_SENDER_ID', '" . addslashes($data['sms']['sender']) . "');\n\n";
+
+    $config_content .= "define('NIN_API_KEY', '" . addslashes($data['nin']['api_key']) . "');\n\n";
     
     $config_content .= "define('SMTP_HOST', '" . addslashes($data['smtp']['host']) . "');\n";
     $config_content .= "define('SMTP_PORT', " . (int)$data['smtp']['port'] . ");\n";
@@ -30,27 +32,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $config_content .= "define('SMTP_FROM', '" . addslashes($data['smtp']['from']) . "');\n";
 
     if (file_put_contents('../inc/config.php', $config_content)) {
-        // 2. Create Admin Account in DB
+        // 2. Initialize Database & Create Admin Account
         try {
-            $dsn = "mysql:host=" . $data['db']['host'] . ";dbname=" . $data['db']['name'];
-            $pdo = new PDO($dsn, $data['db']['user'], $data['db']['pass']);
+            $dsn = "mysql:host=" . $data['db']['host'] . ";dbname=" . $data['db']['name'] . ";charset=utf8mb4";
+            $pdo = new PDO($dsn, $data['db']['user'], $data['db']['pass'], [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+            ]);
             
-            // Create Users Table if not exists
-            $pdo->exec("CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                username VARCHAR(50) UNIQUE,
-                email VARCHAR(100) UNIQUE,
-                password VARCHAR(255),
-                role ENUM('admin', 'agent') DEFAULT 'admin',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )");
+            // Import Schema
+            $sql = file_get_contents('schema.sql');
+            $pdo->exec($sql);
 
-            $stmt = $pdo->prepare("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, 'admin')");
-            $stmt->execute([$admin_user, $admin_email, password_hash($admin_pass, PASSWORD_DEFAULT)]);
+            // Create Super Admin Role
+            $role_stmt = $pdo->prepare("INSERT INTO roles (name, permissions) VALUES (?, ?)");
+            $role_stmt->execute(['Super Admin', json_encode(['all'])]);
+            $role_id = $pdo->lastInsertId();
+
+            // Create Admin User
+            $stmt = $pdo->prepare("INSERT INTO users (username, email, password, role_id) VALUES (?, ?, ?, ?)");
+            $stmt->execute([$admin_user, $admin_email, password_hash($admin_pass, PASSWORD_DEFAULT), $role_id]);
 
             $_SESSION['install_complete'] = true;
         } catch (PDOException $e) {
-            $error = "DB Error during admin creation: " . $e->getMessage();
+            $error = "DB Error during initialization: " . $e->getMessage();
         }
     } else {
         $error = "Failed to write inc/config.php. Check permissions.";
