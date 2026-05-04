@@ -127,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
                         <label>Role</label>
                         <select name="role_id" required>
                             <?php foreach ($roles as $role): ?>
-                                <option value="<?php echo $role['id']; ?>"><?php echo $role['name']; ?></option>
+                                <option value="<?php echo $role['id']; ?>"><?php echo htmlspecialchars($role['name'], ENT_QUOTES, 'UTF-8'); ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -152,9 +152,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_admin'])) {
                     <tbody>
                         <?php foreach ($admins as $admin): ?>
                             <tr>
-                                <td><?php echo $admin['username']; ?></td>
-                                <td><?php echo $admin['email']; ?></td>
-                                <td><span class="badge"><?php echo $admin['role_name'] ?? 'No Role'; ?></span></td>
+                                <td><?php echo htmlspecialchars($admin['username'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><?php echo htmlspecialchars($admin['email'], ENT_QUOTES, 'UTF-8'); ?></td>
+                                <td><span class="badge"><?php echo htmlspecialchars($admin['role_name'] ?? 'No Role', ENT_QUOTES, 'UTF-8'); ?></span></td>
                                 <td><?php echo date('M j, Y', strtotime($admin['created_at'])); ?></td>
                                 <td>
                                     <button style="background: none; border: none; color: #3b82f6; cursor: pointer;">Edit</button>

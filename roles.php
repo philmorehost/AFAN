@@ -135,11 +135,11 @@ $roles = $adminService->getRoles();
                             $perms = json_decode($role['permissions'], true);
                         ?>
                             <tr>
-                                <td><strong><?php echo $role['name']; ?></strong></td>
+                                <td><strong><?php echo htmlspecialchars($role['name'], ENT_QUOTES, 'UTF-8'); ?></strong></td>
                                 <td>
                                     <?php if (!empty($perms)): ?>
                                         <?php foreach ($perms as $p): ?>
-                                            <span class="perm-tag"><?php echo $p; ?></span>
+                                            <span class="perm-tag"><?php echo htmlspecialchars($p, ENT_QUOTES, 'UTF-8'); ?></span>
                                         <?php endforeach; ?>
                                     <?php endif; ?>
                                 </td>
